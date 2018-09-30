@@ -360,7 +360,7 @@ trait Internals { self: Universe =>
 
     /** A creator for `BoundedWildcardType` types.
      */
-    def boundedWildcardType(bounds: TypeBounds): BoundedWildcardType
+    def boundedWildcardType(lo: Type, hi: Type): BoundedWildcardType
 
     /** Syntactic conveniences for additional internal APIs for trees, symbols and types */
     type Decorators <: DecoratorApi
@@ -546,7 +546,7 @@ trait Internals { self: Universe =>
 
     def TypeBounds(lo: Type, hi: Type): TypeBounds
 
-    def BoundedWildcardType(bounds: TypeBounds): BoundedWildcardType
+    def BoundedWildcardType(lo: Type, hi: Type): BoundedWildcardType
 
     def thisPrefix(sym: Symbol): Type
 

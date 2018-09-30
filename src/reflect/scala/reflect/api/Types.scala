@@ -1002,7 +1002,7 @@ trait Types {
 
     /** @see [[InternalApi.boundedWildcardType]] */
     @deprecated("use `internal.boundedWildcardType` instead", "2.11.0")
-    def apply(bounds: TypeBounds)(implicit token: CompatToken): BoundedWildcardType = internal.boundedWildcardType(bounds)
+    def apply(bounds: TypeBounds)(implicit token: CompatToken): BoundedWildcardType = internal.boundedWildcardType(bounds.lo, bounds.hi)
   }
 
   /** The API that all this types support.

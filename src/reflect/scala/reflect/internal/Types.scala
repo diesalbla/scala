@@ -1147,26 +1147,26 @@ trait Types
    *       type is created: a MethodType with parameters typed as
    *       BoundedWildcardTypes.
    */
-  case class BoundedWildcardType(override val bounds: TypeBounds) extends ProtoType with BoundedWildcardTypeApi {
-    override def upperBound: Type = bounds.hi
-    override def lowerBound: Type = bounds.lo
+  class BoundedWildcardType(override val lowerBound: Type, override val upperBound: Type) extends ProtoType with BoundedWildcardTypeApi {
     override def isMatchedBy(tp: Type, depth: Depth)= isSubType(tp, bounds.hi, depth)
     override def canMatch(tp: Type, depth: Depth): Boolean = isSubType(bounds.lo, tp, depth)
     override def registerTypeEquality(tp: Type): Boolean = bounds.containsType(tp)
-    override def toBounds: TypeBounds = bounds
     override def members = bounds.lo.members
 
     override def toVariantType: Type = bounds
     override def safeToString: String = "?" + bounds
     override def kind = "BoundedWildcardType"
     override def mapOver(map: TypeMap): Type = {
-      val bounds1 = map(bounds)
-      if (bounds1 eq bounds) this
-      else BoundedWildcardType(bounds1.asInstanceOf[TypeBounds])
+      val lb = map(lowerBound)
+      val ub = map(upperBound)
+      if ( (lb eq lowerBound) && (ub eq upperBound)) this else new BoundedWildcardType(lb, ub)
     }
   }
 
-  object BoundedWildcardType extends BoundedWildcardTypeExtractor
+  object BoundedWildcardType extends BoundedWildcardTypeExtractor {
+    def apply(lo: Type, hi: Type): BoundedWildcardType = new BoundedWildcardType(lo, hi)
+    def unapply(tpe: BoundedWildcardType): Option[TypeBounds] = Some( TypeBounds(tpe.lowerBound, tpe.upperBound))
+  }
 
   abstract class ProtoType extends Type {
     def toBounds: TypeBounds = TypeBounds.empty

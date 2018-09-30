@@ -85,7 +85,7 @@ trait ReificationSupport { self: SymbolTable =>
 
     def TypeBounds(lo: Type, hi: Type): TypeBounds = self.TypeBounds(lo, hi)
 
-    def BoundedWildcardType(bounds: TypeBounds): BoundedWildcardType = self.BoundedWildcardType(bounds)
+    def BoundedWildcardType(lo: Type, hi: Type): BoundedWildcardType = self.BoundedWildcardType(lo, hi)
 
     def thisPrefix(sym: Symbol): Type = sym.thisPrefix
 
