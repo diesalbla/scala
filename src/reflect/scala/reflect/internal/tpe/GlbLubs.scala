@@ -113,7 +113,10 @@ private[internal] trait GlbLubs {
         // constructors.) Also filter out all types that are a subtype of some other type.
         if (isUniformFrontier) {
           val tails = tsBts map (_.tail)
-          val ts1   = elimSub(ts0, depth) map elimHigherOrderTypeParam
+          val tsArr = listToArray[Type](ts)
+          val size  = elimSubAux(tsArr, tsArr.length, depth)
+          mapInPlace( tsArr, size, elimHigherOrderTypeParam)
+          val ts1 = arrayToList(tsArr, 0, size)
           mergePrefixAndArgs(ts1, Covariant, depth) match {
             case NoType => loop(pretypes, tails)
             case tp =>
@@ -268,29 +271,42 @@ private[internal] trait GlbLubs {
 
   /** The least upper bound wrt <:< of a list of types */
   protected[internal] def lub(ts: List[Type], depth: Depth): Type = {
-    def lub0(ts0: List[Type]): Type = elimSub(ts0, depth) match {
-      case List() => NothingTpe
-      case List(t) => t
-      case (pt @ PolyType(_, _)) :: rest =>
-        polyTypeMatch(pt, rest, depth, glb, lub0)
-      case ts @ (mt @ MethodType(params, _)) :: rest =>
-        MethodType(params, lub0(matchingRestypes(ts, mt.paramTypes)))
-      case ts @ NullaryMethodType(_) :: rest =>
-        NullaryMethodType(lub0(matchingRestypes(ts, Nil)))
-      case ts @ TypeBounds(_, _) :: rest =>
-        TypeBounds(glb(ts map (_.lowerBound), depth), lub(ts map (_.upperBound), depth))
-      case ts @ AnnotatedType(annots, tpe) :: rest =>
-        annotationsLub(lub0(ts map (_.withoutAnnotations)), ts)
-      case ts =>
-        lubResults get ((depth, ts)) match {
-          case Some(lubType) =>
-            lubType
-          case None =>
-            lubResults((depth, ts)) = AnyTpe
-            val res = if (depth.isNegative) AnyTpe else lub1(ts)
-            lubResults((depth, ts)) = res
-            res
+    def lub0(ts0: List[Type]): Type = {
+      val ts0Arr = listToArray[Type](ts)
+      val size = elimSubAux(ts0Arr, ts0Arr.length, depth)
+      size match {
+        case 0 => NothingTpe
+        case 1 => ts0Arr(0)
+        case n => ts0Arr(0) match {
+          case PolyType(tparams, _) =>
+            polyTypeMatch(pt, rest, depth, glb, lub0)
+
+          case mt @ MethodType(params, _) =>
+            val ts = arrayToList(ts0Arr, 0, size)
+            MethodType(params, lub0(matchingRestypes(ts, mt.paramTypes)))
+          case NullaryMethodType(_) =>
+            val ts = arrayToList(ts0Arr, 0, size)
+            NullaryMethodType(lub0(matchingRestypes(ts, Nil)))
+          case TypeBounds(_, _) =>
+            val ts = arrayToList(ts0Arr, 0, size)
+            TypeBounds(glb(ts map (_.lowerBound), depth), lub(ts map (_.upperBound), depth))
+          case AnnotatedType(annots, tpe) =>
+            val ts = arrayToList(ts0Arr, 0, size)
+            annotationsLub(lub0(ts map (_.withoutAnnotations)), ts)
+          case _ =>
+            val ts = arrayToList(ts0Arr, 0, size)
+            lubResults get ((depth, ts)) match {
+              case Some(lubType) =>
+                lubType
+              case None =>
+                lubResults((depth, ts)) = AnyTpe
+                val res = if (depth.isNegative) AnyTpe else lub1(ts)
+                lubResults((depth, ts)) = res
+                res
+            }
         }
+
+      }
     }
     def lub1(ts0: List[Type]): Type = {
       val (ts, tparams)            = stripExistentialsAndTypeVars(ts0)
