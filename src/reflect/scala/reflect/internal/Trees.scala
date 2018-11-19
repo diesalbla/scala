@@ -742,6 +742,15 @@ trait Trees extends api.Trees {
     override def transform(transformer: Transformer): Tree =
       transformer.treeCopy.Apply(this, transformer.transform(fun), transformer.transformTrees(args))
     override def traverse(traverser: Traverser): Unit = {
+      if (this.toString.length > 50) {
+        try {
+          throw new RuntimeException("GET ME OUT OF HERE")
+        }
+        catch {
+          case e: Throwable => e.printStackTrace() ; throw e
+        }
+      }
+      println(this)
       traverser.traverse(fun)
       traverser.traverseTrees(args)
     }
